@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Counter with Step Controls</title>
+
+<style>
+  /* Step 1: Basic reset and page background */
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg-1: #0b1020;
+    --border: rgba(255, 255, 255, 0.12);
+    --text: #e8eefc;
+    --muted: #8b97b5;
+    --accent: #4f7cff;
+    --positive: #34d399;
+    --negative: #f87171;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: radial-gradient(1200px 600px at 50% -10%, #1b2447, var(--bg-1));
+  }
+
+  /* Step 2: The counter card container */
+  .counter {
+    width: min(420px, 100%);
+    padding: 28px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    border: 1px solid var(--border);
+    box-shadow:
+      0 30px 60px -20px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+  }
+
+  .title {
+    margin: 0;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Step 3: The big number display, with color + pop feedback */
+  .display {
+    display: block;
+    margin: 10px 0 24px;
+    text-align: center;
+    font-size: clamp(3.5rem, 15vw, 5.5rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+    word-break: break-all;
+    transition: color 0.25s ease;
+  }
+
+  .display.positive { color: var(--positive); }
+  .display.negative { color: var(--negative); }
+
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .display.pop { animation: pop 0.25s ease; }
+
+  /* Step 4: Shared button styles */
+  .btn {
+    font: inherit;
+    color: var(--text);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .btn:hover  { background: rgba(255, 255, 255, 0.12); }
+  .btn:active { transform: scale(0.96); }
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Step 5: The main + and − buttons */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-main {
+    padding: 18px;
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  #inc {
+    background: linear-gradient(180deg, #5b8bff, #3f68e0);
+    border-color: #6d97ff;
+    box-shadow: 0 10px 22px -10px rgba(79, 124, 255, 0.95);
+  }
+  #inc:hover { background: linear-gradient(180deg, #6d97ff, #4f7cff); }
+
+  /* Step 6: Step size controls (label + minus/input/plus) */
+  .step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .step-label {
+    font-size: 0.95rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .btn-step {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 1.05rem;
+    border-radius: 9px;
+  }
+
+  .step-input {
+    width: 70px;
+    padding: 6px 0;
+    text-align: center;
+    font: inherit;
+    font-weight: 600;
+    color: var(--text);
+    background: transparent;
+    border: 0;
+    outline: none;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  .step-input::-webkit-outer-spin-button,
+  .step-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Step 7: Preset step chips */
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .chip {
+    padding: 9px 0;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .chip:hover { color: var(--text); background: rgba(255, 255, 255, 0.1); }
+  .chip.active {
+    color: #fff;
+    background: rgba(79, 124, 255, 0.28);
+    border-color: rgba(79, 124, 255, 0.8);
+    box-shadow: inset 0 0 0 1px rgba(79, 124, 255, 0.45);
+  }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Step 8: Reset button and keyboard hint */
+  .btn-reset {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .btn-reset:hover { color: var(--text); }
+
+  .hint {
+    margin: 16px 0 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: rgba(139, 151, 181, 0.8);
+  }
+  .hint kbd {
+    padding: 1px 5px;
+    font: inherit;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  /* Step 9: Disable animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Step 10: The whole counter UI -->
+  <main class="counter" role="group" aria-label="Counter">
+    <h1 class="title">Counter</h1>
+
+    <!-- The number display (live region so screen readers announce changes) -->
+    <output class="display" id="count" aria-live="polite">0</output>
+
+    <!-- Main + and − buttons -->
+    <div class="controls">
+      <button class="btn btn-main" id="dec" aria-label="Decrease count">−</button>
+      <button class="btn btn-main" id="inc" aria-label="Increase count">+</button>
+    </div>
+
+    <!-- Step size control -->
+    <div class="step-row">
+      <label class="step-label" for="step">Step size</label>
+      <div class="stepper">
+        <button class="btn btn-step" id="stepDown" aria-label="Decrease step size">−</button>
+        <input
+          class="step-input"
+          id="step"
+          type="number"
+          min="1"
+          max="1000"
+          step="1"
+          value="1"
+          inputmode="numeric"
+          aria-label="Step size"
+        />
+        <button class="btn btn-step" id="stepUp" aria-label="Increase step size">+</button>
+      </div>
+    </div>
+
+    <!-- Preset step chips -->
+    <div class="presets" id="presets" role="group" aria-label="Step presets">
+      <button class="chip active" data-step="1">1</button>
+      <button class="chip" data-step="5">5</button>
+      <button class="chip" data-step="10">10</button>
+      <button class="chip" data-step="25">25</button>
+    </div>
+
+    <button class="btn btn-reset" id="reset">Reset</button>
+
+    <p class="hint">
+      <kbd>↑</kbd> / <kbd>↓</kbd> to count &nbsp;·&nbsp; <kbd>R</kbd> to reset
+    </p>
+  </main>
+
+<script>
+  /* Step 11: Grab the elements we need and set up state */
+  const countEl = document.getElementById('count');
+  const stepEl  = document.getElementById('step');
+  const presets = [...document.querySelectorAll('.chip')];
+
+  const MAX_STEP = 1000;
+  let count = 0;
+
+  /* Step 12: Small helpers — keep the step value valid and read it */
+  const clampStep = n => Math.min(MAX_STEP, Math.max(1, Math.round(n) || 1));
+  const getStep   = () => clampStep(Number(stepEl.value));
+
+  /* Step 13: Highlight whichever preset chip matches the current step */
+  function syncPresets() {
+    const step = getStep();
+    presets.forEach(p => p.classList.toggle('active', Number(p.dataset.step) === step));
+  }
+
+  /* Step 14: Show the count with color + pop animation */
+  function render(animate = true) {
+    countEl.textContent = count.toLocaleString('en-US');
+    countEl.classList.toggle('positive', count > 0);
+    countEl.classList.toggle('negative', count < 0);
+
+    if (animate) {
+      countEl.classList.remove('pop');
+      void countEl.offsetWidth; // restart the animation
+      countEl.classList.add('pop');
+    }
+  }
+
+  /* Step 15: Change the count by a delta */
+  function add(delta) {
+    count += delta;
+    render();
+  }
+
+  /* Step 16: The main + and − buttons use the current step size */
+  document.getElementById('inc').addEventListener('click', () => add(getStep()));
+  document.getElementById('dec').addEventListener('click', () => add(-getStep()));
+
+  /* Step 17: The small step + and − buttons change the step size by 1 */
+  document.getElementById('stepUp').addEventListener('click', () => {
+    stepEl.value = clampStep(getStep() + 1);
+    syncPresets();
+  });
+  document.getElementById('stepDown').addEventListener('click', () => {
+    stepEl.value = clampStep(getStep() - 1);
+    syncPresets();
+  });
+
+  /* Step 18: Typing in the step input updates the chip highlight and clamps on commit */
+  stepEl.addEventListener('input', syncPresets);
+  stepEl.addEventListener('change', () => {
+    stepEl.value = getStep();
+    syncPresets();
+  });
+
+  /* Step 19: Clicking a preset chip sets the step input */
+  presets.forEach(btn => btn.addEventListener('click', () => {
+    stepEl.value = btn.dataset.step;
+    syncPresets();
+  }));
+
+  /* Step 20: Reset returns the count to zero */
+  document.getElementById('reset').addEventListener('click', () => {
+    count = 0;
+    render();
+  });
+
+  /* Step 21: Keyboard shortcuts (↑ ↓ to count, R to reset) */
+  document.addEventListener('keydown', e => {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+    if (e.key === 'ArrowUp' || e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      add(getStep());
+    } else if (e.key === 'ArrowDown' || e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      add(-getStep());
+    } else if (e.key.toLowerCase() === 'r') {
+      e.preventDefault();
+      count = 0;
+      render();
+    }
+  });
+
+  /* Step 22: Start things off */
+  syncPresets();
+  render(false);
+</script>
+</body>
+</html>
