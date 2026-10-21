@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tip Calculator</title>
+
+    <style>
+      /* ---------- Reset & page background ---------- */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        color: #0f172a;
+      }
+
+      /* ---------- The white card ---------- */
+      .card {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 26px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      }
+
+      h1 {
+        font-size: 1.4rem;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-bottom: 22px;
+      }
+
+      /* ---------- Inputs ---------- */
+      .field {
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      input[type="number"] {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 1rem;
+        font-family: inherit;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+
+      input[type="number"]:focus {
+        border-color: #14b8a6;
+        background: #ffffff;
+      }
+
+      /* ---------- Quick tip buttons ---------- */
+      .tip-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .tip-btn {
+        padding: 10px 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: inherit;
+        border: 2px solid #e2e8f0;
+        background: #f8fafc;
+        color: #334155;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .tip-btn:hover {
+        border-color: #14b8a6;
+        color: #0f766e;
+      }
+
+      .tip-btn.active {
+        background: #14b8a6;
+        border-color: #14b8a6;
+        color: #ffffff;
+      }
+
+      /* ---------- Results panel ---------- */
+      .results {
+        background: #0f172a;
+        border-radius: 14px;
+        padding: 6px 18px;
+        color: #e2e8f0;
+        margin: 22px 0 18px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        font-size: 0.95rem;
+      }
+
+      .row + .row {
+        border-top: 1px solid #1e293b;
+      }
+
+      .row span:last-child {
+        font-weight: 700;
+        color: #5eead4;
+        font-size: 1.05rem;
+      }
+
+      .row.big span:last-child {
+        font-size: 1.3rem;
+      }
+
+      /* ---------- Reset button ---------- */
+      .reset-btn {
+        width: 100%;
+        padding: 13px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        font-family: inherit;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #0f766e;
+        background: #ccfbf1;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .reset-btn:hover {
+        background: #99f6e4;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="card">
+      <h1>💵 Tip Calculator</h1>
+      <p class="subtitle">Quick percentage math for services</p>
+
+      <!-- 1. Bill amount -->
+      <div class="field">
+        <label for="bill">Bill amount</label>
+        <input
+          id="bill"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          inputmode="decimal"
+        />
+      </div>
+
+      <!-- 2. Tip percentage (quick buttons + custom) -->
+      <div class="field">
+        <label>Tip percentage</label>
+        <div class="tip-grid">
+          <button class="tip-btn" data-tip="10">10%</button>
+          <button class="tip-btn active" data-tip="15">15%</button>
+          <button class="tip-btn" data-tip="18">18%</button>
+          <button class="tip-btn" data-tip="20">20%</button>
+          <button class="tip-btn" data-tip="25">25%</button>
+        </div>
+        <input
+          id="custom-tip"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="Custom % (optional)"
+          inputmode="decimal"
+        />
+      </div>
+
+      <!-- 3. Split between people -->
+      <div class="field">
+        <label for="people">Split between</label>
+        <input id="people" type="number" min="1" step="1" value="1" />
+      </div>
+
+      <!-- 4. Results -->
+      <div class="results">
+        <div class="row">
+          <span>Tip amount</span>
+          <span id="tip-amount">$0.00</span>
+        </div>
+        <div class="row">
+          <span>Total bill</span>
+          <span id="total">$0.00</span>
+        </div>
+        <div class="row big">
+          <span>Each person pays</span>
+          <span id="per-person">$0.00</span>
+        </div>
+      </div>
+
+      <button id="reset" class="reset-btn">Reset</button>
+    </main>
+
+    <script>
+      /* =========================================================
+       1. GRAB THE ELEMENTS WE NEED FROM THE PAGE
+       ========================================================= */
+      const billInput = document.getElementById("bill");
+      const peopleInput = document.getElementById("people");
+      const customTipInput = document.getElementById("custom-tip");
+      const tipButtons = document.querySelectorAll(".tip-btn");
+
+      const tipAmountEl = document.getElementById("tip-amount");
+      const totalEl = document.getElementById("total");
+      const perPersonEl = document.getElementById("per-person");
+      const resetBtn = document.getElementById("reset");
+
+      // The currently selected tip percentage (15% is the default).
+      let tipPercent = 15;
+
+      /* =========================================================
+       2. HELPER: turn a number into money format, e.g. 12.5 -> "$12.50"
+       ========================================================= */
+      function money(amount) {
+        return "$" + amount.toFixed(2);
+      }
+
+      /* =========================================================
+       3. THE MAIN CALCULATION
+       ========================================================= */
+      function calculate() {
+        // parseFloat turns text into a decimal number. "|| 0" means:
+        // if it's empty or invalid, use 0 instead.
+        const bill = parseFloat(billInput.value) || 0;
+
+        // Split between at least 1 person.
+        let people = parseInt(peopleInput.value, 10);
+        if (isNaN(people) || people < 1) {
+          people = 1;
+        }
+
+        const tipAmount = bill * (tipPercent / 100);
+        const total = bill + tipAmount;
+        const perPerson = total / people;
+
+        // Show the results on the page.
+        tipAmountEl.textContent = money(tipAmount);
+        totalEl.textContent = money(total);
+        perPersonEl.textContent = money(perPerson);
+      }
+
+      /* =========================================================
+       4. HIGHLIGHT THE ACTIVE TIP BUTTON
+       ========================================================= */
+      function highlightButton(activeButton) {
+        // Remove "active" from every button...
+        tipButtons.forEach(function (btn) {
+          btn.classList.remove("active");
+        });
+        // ...then add it to the one that was clicked.
+        if (activeButton) {
+          activeButton.classList.add("active");
+        }
+      }
+
+      /* =========================================================
+       5. EVENT LISTENERS — react to what the user does
+       ========================================================= */
+
+      // Quick tip buttons
+      tipButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          tipPercent = Number(button.dataset.tip); // read the data-tip value
+          customTipInput.value = ""; // clear the custom field
+          highlightButton(button);
+          calculate();
+        });
+      });
+
+      // Custom tip input
+      customTipInput.addEventListener("input", function () {
+        const value = parseFloat(customTipInput.value);
+
+        if (isNaN(value) || value < 0) {
+          tipPercent = 0;
+        } else {
+          tipPercent = value;
+        }
+
+        // Custom value means no quick button is selected anymore.
+        highlightButton(null);
+        calculate();
+      });
+
+      // Typing in the bill or people fields
+      billInput.addEventListener("input", calculate);
+      peopleInput.addEventListener("input", calculate);
+
+      // Reset everything back to the starting state
+      resetBtn.addEventListener("click", function () {
+        billInput.value = "";
+        peopleInput.value = 1;
+        customTipInput.value = "";
+        tipPercent = 15;
+
+        // Re-select the 15% button
+        highlightButton(document.querySelector('.tip-btn[data-tip="15"]'));
+
+        calculate();
+        billInput.focus();
+      });
+
+      /* =========================================================
+       6. RUN ONCE WHEN THE PAGE LOADS
+       ========================================================= */
+      calculate();
+    </script>
+  </body>
+</html>
