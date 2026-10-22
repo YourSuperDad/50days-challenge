@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Star Rating Component</title>
+
+  <style>
+    /* ---------- Reset & page background ---------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at top, #1f2937, #0f172a 70%);
+      color: #e2e8f0;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    /* ---------- The card ---------- */
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card > section {
+      animation: fadeIn 0.25s ease;
+    }
+
+    /* ---------- Rating view ---------- */
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f59e0b;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    /* ---------- The star row ---------- */
+    .stars {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .star {
+      background: none;
+      border: none;
+      padding: 4px;
+      line-height: 0;
+      cursor: pointer;
+      color: #475569;
+      transition: transform 0.12s ease, color 0.12s ease;
+    }
+
+    .star svg {
+      width: 34px;
+      height: 34px;
+      fill: none;                 /* empty star = outline only */
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+      transition: fill 0.12s ease;
+    }
+
+    .star:hover {
+      transform: scale(1.12);
+    }
+
+    .star:focus-visible {
+      outline: 2px solid #f59e0b;
+      outline-offset: 2px;
+      border-radius: 8px;
+    }
+
+    /* This one class makes a star "lit up" */
+    .star.filled {
+      color: #f59e0b;
+    }
+    .star.filled svg {
+      fill: #f59e0b;
+    }
+
+    /* Static (non-clickable) stars inside the thank-you view */
+    .stars.readonly {
+      margin-bottom: 14px;
+    }
+    .stars.readonly .star {
+      cursor: default;
+    }
+    .stars.readonly .star:hover {
+      transform: none;
+    }
+    .stars.readonly .star svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    /* ---------- Rating label ---------- */
+    .rating-label {
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #94a3b8;
+      min-height: 1.3em;   /* reserves space so layout doesn't jump */
+      margin-bottom: 16px;
+    }
+    .rating-label.picked {
+      color: #f59e0b;
+    }
+
+    .error {
+      color: #fca5a5;
+      font-size: 0.8rem;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    /* ---------- Buttons ---------- */
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 30px;
+      background: #f59e0b;
+      color: #0f172a;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .submit-btn:hover {
+      background: #fbbf24;
+    }
+    .submit-btn:focus-visible {
+      outline: 2px solid #f59e0b;
+      outline-offset: 3px;
+    }
+
+    /* ---------- Thank-you view ---------- */
+    #thankyou-view {
+      text-align: center;
+    }
+
+    .thankyou-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f59e0b;
+    }
+
+    .selected-pill {
+      display: inline-block;
+      background: #334155;
+      color: #f59e0b;
+      font-size: 0.85rem;
+      padding: 8px 16px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+    }
+
+    #thankyou-view h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .thankyou-desc {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+
+    <!-- ============ VIEW 1: RATING FORM ============ -->
+    <section id="rating-view">
+      <div class="icon-circle">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+        </svg>
+      </div>
+
+      <h1>Rate this app</h1>
+      <p class="description">
+        How has your experience been so far? Tap a star to leave a rating —
+        it only takes a second.
+      </p>
+
+      <!-- The five stars. Each button holds one SVG star. -->
+      <div class="stars" id="stars-group" role="group" aria-label="Rate from 1 to 5 stars">
+        <button class="star" data-rating="1" aria-label="Rate 1 star">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+          </svg>
+        </button>
+        <button class="star" data-rating="2" aria-label="Rate 2 stars">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+          </svg>
+        </button>
+        <button class="star" data-rating="3" aria-label="Rate 3 stars">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+          </svg>
+        </button>
+        <button class="star" data-rating="4" aria-label="Rate 4 stars">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+          </svg>
+        </button>
+        <button class="star" data-rating="5" aria-label="Rate 5 stars">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="rating-label" id="rating-label">Tap a star to rate</p>
+
+      <p class="error" id="error" role="alert" hidden>Please pick a star rating first</p>
+
+      <button id="submit-btn" class="submit-btn">Submit rating</button>
+    </section>
+
+    <!-- ============ VIEW 2: THANK YOU ============ -->
+    <section id="thankyou-view" hidden>
+      <div class="thankyou-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="4 12.5 9.5 18 20 6"/>
+        </svg>
+      </div>
+
+      <!-- Static stars that show what the user picked -->
+      <div class="stars readonly" id="thankyou-stars" aria-hidden="true">
+        <span class="star">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/></svg>
+        </span>
+        <span class="star">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/></svg>
+        </span>
+        <span class="star">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/></svg>
+        </span>
+        <span class="star">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/></svg>
+        </span>
+        <span class="star">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.58 1.49 6.74L12 16.9l-6.09 3.34 1.49-6.74L2.25 8.92l6.85-.66L12 2z"/></svg>
+        </span>
+      </div>
+
+      <p class="selected-pill">
+        You rated <strong id="selected-rating">0</strong> out of 5
+      </p>
+
+      <h2>Thanks for rating!</h2>
+      <p class="thankyou-desc">
+        We appreciate you taking the time to leave a rating.
+        Your feedback helps us make the app better for everyone.
+      </p>
+
+      <button id="again-btn" class="submit-btn">Rate again</button>
+    </section>
+
+  </main>
+
+  <script>
+    /* =========================================================
+       1. GRAB THE ELEMENTS
+       ========================================================= */
+    const starsGroup    = document.getElementById("stars-group");
+    const ratingStars   = document.querySelectorAll("#stars-group .star");
+    const thankyouStars = document.querySelectorAll("#thankyou-stars .star");
+    const ratingLabel   = document.getElementById("rating-label");
+    const errorEl       = document.getElementById("error");
+    const submitBtn     = document.getElementById("submit-btn");
+    const ratingView    = document.getElementById("rating-view");
+    const thankyouView  = document.getElementById("thankyou-view");
+    const selectedEl    = document.getElementById("selected-rating");
+    const againBtn      = document.getElementById("again-btn");
+
+    /* =========================================================
+       2. STATE + WORD LOOKUP
+       ========================================================= */
+    let selectedRating = 0;  // 0 = nothing chosen yet
+
+    // Index = star count. LABELS[4] = "Good". Index 0 is unused.
+    const LABELS = ["", "Terrible", "Poor", "Average", "Good", "Excellent"];
+
+    /* =========================================================
+       3. PAINT HELPER — light up the first `count` stars
+       ========================================================= */
+    function paint(starList, count) {
+      starList.forEach(function (star, index) {
+        // index < count  =>  this star should be filled
+        star.classList.toggle("filled", index < count);
+      });
+    }
+
+    /* =========================================================
+       4. LABEL HELPER — update the text under the stars
+       ========================================================= */
+    function showLabel(rating) {
+      if (rating === 0) {
+        ratingLabel.textContent = "Tap a star to rate";
+        ratingLabel.classList.remove("picked");
+      } else {
+        ratingLabel.textContent = LABELS[rating] + " — " + rating + " out of 5";
+        ratingLabel.classList.add("picked");
+      }
+    }
+
+    /* =========================================================
+       5. WIRE UP EACH STAR
+       ========================================================= */
+    ratingStars.forEach(function (star, index) {
+      const value = index + 1;  // stars are 1-based, indexes are 0-based
+
+      // HOVER: preview this many stars
+      star.addEventListener("mouseenter", function () {
+        paint(ratingStars, value);
+        showLabel(value);
+      });
+
+      // FOCUS: same preview for keyboard users
+      star.addEventListener("focus", function () {
+        paint(ratingStars, value);
+        showLabel(value);
+      });
+
+      // CLICK: commit the choice
+      star.addEventListener("click", function () {
+        selectedRating = value;
+        paint(ratingStars, value);
+        showLabel(value);
+        errorEl.hidden = true;
+      });
+
+      // BLUR: revert to the committed rating when focus leaves
+      star.addEventListener("blur", function () {
+        paint(ratingStars, selectedRating);
+        showLabel(selectedRating);
+      });
+    });
+
+    // When the pointer leaves the whole star row, revert the preview
+    starsGroup.addEventListener("mouseleave", function () {
+      paint(ratingStars, selectedRating);
+      showLabel(selectedRating);
+    });
+
+    /* =========================================================
+       6. SUBMIT
+       ========================================================= */
+    submitBtn.addEventListener("click", function () {
+      if (selectedRating === 0) {
+        errorEl.hidden = false;
+        return;
+      }
+
+      selectedEl.textContent = selectedRating;
+      paint(thankyouStars, selectedRating);   // light up the static stars
+
+      ratingView.hidden = true;
+      thankyouView.hidden = false;
+    });
+
+    /* =========================================================
+       7. RATE AGAIN
+       ========================================================= */
+    againBtn.addEventListener("click", function () {
+      selectedRating = 0;
+      paint(ratingStars, 0);
+      showLabel(0);
+      errorEl.hidden = true;
+
+      thankyouView.hidden = true;
+      ratingView.hidden = false;
+    });
+
+    /* =========================================================
+       8. INITIAL STATE
+       ========================================================= */
+    paint(ratingStars, 0);
+    showLabel(0);
+  </script>
+</body>
+</html>
