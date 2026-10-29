@@ -1,354 +1,390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Modal Dialog with Focus Trap</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modal Dialog with Focus Trap</title>
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 20px;
-      background: linear-gradient(135deg, #f0f9ff, #ede9fe);
-      color: #1e293b;
-    }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 20px;
+        background: linear-gradient(135deg, #f0f9ff, #ede9fe);
+        color: #1e293b;
+      }
 
-    /* ---------- Sample page content ---------- */
-    .page {
-      max-width: 500px;
-      text-align: center;
-    }
-    .page h1 {
-      font-size: 1.8rem;
-      margin-bottom: 12px;
-    }
-    .page p {
-      color: #64748b;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
+      /* ---------- Sample page content ---------- */
+      .page {
+        max-width: 500px;
+        text-align: center;
+      }
+      .page h1 {
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+      }
+      .page p {
+        color: #64748b;
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
 
-    .open-btn {
-      padding: 14px 28px;
-      background: #7c3aed;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
-      transition: background 0.15s, transform 0.15s;
-    }
-    .open-btn:hover { background: #6d28d9; transform: translateY(-1px); }
-    .open-btn:focus-visible {
-      outline: 3px solid #7c3aed;
-      outline-offset: 3px;
-    }
+      .open-btn {
+        padding: 14px 28px;
+        background: #7c3aed;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        transition:
+          background 0.15s,
+          transform 0.15s;
+      }
+      .open-btn:hover {
+        background: #6d28d9;
+        transform: translateY(-1px);
+      }
+      .open-btn:focus-visible {
+        outline: 3px solid #7c3aed;
+        outline-offset: 3px;
+      }
 
-    /* ---------- Backdrop ---------- */
-    .backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(3px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.2s ease, visibility 0.2s ease;
-      z-index: 100;
-    }
-    .backdrop.open {
-      opacity: 1;
-      visibility: visible;
-    }
+      /* ---------- Backdrop ---------- */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.2s ease,
+          visibility 0.2s ease;
+        z-index: 100;
+      }
+      .backdrop.open {
+        opacity: 1;
+        visibility: visible;
+      }
 
-    /* ---------- Modal ---------- */
-    .modal {
-      width: 100%;
-      max-width: 420px;
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
-      transform: scale(0.95) translateY(8px);
-      transition: transform 0.2s ease;
-      position: relative;
-    }
-    .backdrop.open .modal {
-      transform: scale(1) translateY(0);
-    }
+      /* ---------- Modal ---------- */
+      .modal {
+        width: 100%;
+        max-width: 420px;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+        transform: scale(0.95) translateY(8px);
+        transition: transform 0.2s ease;
+        position: relative;
+      }
+      .backdrop.open .modal {
+        transform: scale(1) translateY(0);
+      }
 
-    .modal-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 34px;
-      height: 34px;
-      border: none;
-      background: #f1f5f9;
-      color: #475569;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-    }
-    .modal-close:hover { background: #e2e8f0; }
-    .modal-close:focus-visible {
-      outline: 2px solid #7c3aed;
-      outline-offset: 2px;
-    }
+      .modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 34px;
+        height: 34px;
+        border: none;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+      }
+      .modal-close:hover {
+        background: #e2e8f0;
+      }
+      .modal-close:focus-visible {
+        outline: 2px solid #7c3aed;
+        outline-offset: 2px;
+      }
 
-    .modal h2 {
-      font-size: 1.25rem;
-      margin-bottom: 10px;
-      padding-right: 40px;
-    }
-    .modal p {
-      color: #64748b;
-      font-size: 0.92rem;
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
+      .modal h2 {
+        font-size: 1.25rem;
+        margin-bottom: 10px;
+        padding-right: 40px;
+      }
+      .modal p {
+        color: #64748b;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
 
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
 
-    .btn-secondary {
-      padding: 10px 18px;
-      background: #f1f5f9;
-      color: #475569;
-      border: none;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-secondary:hover { background: #e2e8f0; }
-    .btn-secondary:focus-visible {
-      outline: 2px solid #7c3aed;
-      outline-offset: 2px;
-    }
+      .btn-secondary {
+        padding: 10px 18px;
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+      .btn-secondary:focus-visible {
+        outline: 2px solid #7c3aed;
+        outline-offset: 2px;
+      }
 
-    .btn-primary {
-      padding: 10px 18px;
-      background: #7c3aed;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-primary:hover { background: #6d28d9; }
-    .btn-primary:focus-visible {
-      outline: 2px solid #7c3aed;
-      outline-offset: 2px;
-    }
+      .btn-primary {
+        padding: 10px 18px;
+        background: #7c3aed;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-primary:hover {
+        background: #6d28d9;
+      }
+      .btn-primary:focus-visible {
+        outline: 2px solid #7c3aed;
+        outline-offset: 2px;
+      }
 
-    /* Prevent body scroll while modal is open */
-    body.modal-open { overflow: hidden; }
-  </style>
-</head>
+      /* Prevent body scroll while modal is open */
+      body.modal-open {
+        overflow: hidden;
+      }
+    </style>
+  </head>
 
-<body>
-  <div class="page">
-    <h1>Your dashboard</h1>
-    <p>
-      Everything you need is right here. Need to delete your account?
-      That's a destructive action — we'll ask for confirmation first.
-    </p>
-    <button id="open-modal" class="open-btn">Delete account</button>
-  </div>
-
-  <!-- ============ MODAL ============ -->
-  <div id="backdrop" class="backdrop" hidden>
-    <div
-      id="modal"
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-      aria-describedby="modal-desc"
-      tabindex="-1"
-    >
-      <button id="close-btn" class="modal-close" aria-label="Close dialog">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-          <line x1="6" y1="6" x2="18" y2="18"/>
-          <line x1="18" y1="6" x2="6" y2="18"/>
-        </svg>
-      </button>
-
-      <h2 id="modal-title">Delete your account?</h2>
-      <p id="modal-desc">
-        This will permanently remove your account, data, and subscription.
-        This action cannot be undone.
+  <body>
+    <div class="page">
+      <h1>Your dashboard</h1>
+      <p>
+        Everything you need is right here. Need to delete your account? That's a
+        destructive action — we'll ask for confirmation first.
       </p>
+      <button id="open-modal" class="open-btn">Delete account</button>
+    </div>
 
-      <div class="modal-actions">
-        <button id="cancel-btn" class="btn-secondary">Cancel</button>
-        <button id="confirm-btn" class="btn-primary">Yes, delete</button>
+    <!-- ============ MODAL ============ -->
+    <div id="backdrop" class="backdrop" hidden>
+      <div
+        id="modal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-desc"
+        tabindex="-1"
+      >
+        <button id="close-btn" class="modal-close" aria-label="Close dialog">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <line x1="6" y1="6" x2="18" y2="18" />
+            <line x1="18" y1="6" x2="6" y2="18" />
+          </svg>
+        </button>
+
+        <h2 id="modal-title">Delete your account?</h2>
+        <p id="modal-desc">
+          This will permanently remove your account, data, and subscription.
+          This action cannot be undone.
+        </p>
+
+        <div class="modal-actions">
+          <button id="cancel-btn" class="btn-secondary">Cancel</button>
+          <button id="confirm-btn" class="btn-primary">Yes, delete</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    /* =========================================================
+    <script>
+      /* =========================================================
        1. ELEMENT REFERENCES
        ========================================================= */
-    const openBtn    = document.getElementById("open-modal");
-    const backdrop   = document.getElementById("backdrop");
-    const modal      = document.getElementById("modal");
-    const closeBtn   = document.getElementById("close-btn");
-    const cancelBtn  = document.getElementById("cancel-btn");
-    const confirmBtn = document.getElementById("confirm-btn");
+      const openBtn = document.getElementById("open-modal");
+      const backdrop = document.getElementById("backdrop");
+      const modal = document.getElementById("modal");
+      const closeBtn = document.getElementById("close-btn");
+      const cancelBtn = document.getElementById("cancel-btn");
+      const confirmBtn = document.getElementById("confirm-btn");
 
-    /* =========================================================
+      /* =========================================================
        2. STATE — remember what had focus before we opened
        ========================================================= */
-    let lastFocusedElement = null;
+      let lastFocusedElement = null;
 
-    /* =========================================================
+      /* =========================================================
        3. FOCUSABLE ELEMENT HELPER
        Returns every element inside `container` that can receive
        keyboard focus, in tab order.
        ========================================================= */
-    const FOCUSABLE_SELECTOR = [
-      "a[href]",
-      "button:not([disabled])",
-      "input:not([disabled])",
-      "select:not([disabled])",
-      "textarea:not([disabled])",
-      "[tabindex]:not([tabindex='-1'])"
-    ].join(",");
+      const FOCUSABLE_SELECTOR = [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        "[tabindex]:not([tabindex='-1'])",
+      ].join(",");
 
-    function getFocusable(container) {
-      return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR))
-        .filter(function (el) {
+      function getFocusable(container) {
+        return Array.from(
+          container.querySelectorAll(FOCUSABLE_SELECTOR),
+        ).filter(function (el) {
           // Also skip hidden or zero-size elements
           return el.offsetParent !== null;
         });
-    }
+      }
 
-    /* =========================================================
+      /* =========================================================
        4. OPEN MODAL
        ========================================================= */
-    function openModal() {
-      // Remember what had focus so we can restore it later.
-      lastFocusedElement = document.activeElement;
+      function openModal() {
+        // Remember what had focus so we can restore it later.
+        lastFocusedElement = document.activeElement;
 
-      backdrop.hidden = false;
-      // Force a reflow so the transition plays from "hidden" state.
-      void backdrop.offsetWidth;
-      backdrop.classList.add("open");
+        backdrop.hidden = false;
+        // Force a reflow so the transition plays from "hidden" state.
+        void backdrop.offsetWidth;
+        backdrop.classList.add("open");
 
-      document.body.classList.add("modal-open");
+        document.body.classList.add("modal-open");
 
-      // Move focus into the dialog. Prefer the first focusable
-      // (the close button), fall back to the modal itself.
-      const focusables = getFocusable(modal);
-      if (focusables.length > 0) {
-        focusables[0].focus();
-      } else {
-        modal.focus();
+        // Move focus into the dialog. Prefer the first focusable
+        // (the close button), fall back to the modal itself.
+        const focusables = getFocusable(modal);
+        if (focusables.length > 0) {
+          focusables[0].focus();
+        } else {
+          modal.focus();
+        }
+
+        document.addEventListener("keydown", handleKeydown);
       }
 
-      document.addEventListener("keydown", handleKeydown);
-    }
-
-    /* =========================================================
+      /* =========================================================
        5. CLOSE MODAL
        ========================================================= */
-    function closeModal() {
-      backdrop.classList.remove("open");
-      document.body.classList.remove("modal-open");
+      function closeModal() {
+        backdrop.classList.remove("open");
+        document.body.classList.remove("modal-open");
 
-      document.removeEventListener("keydown", handleKeydown);
+        document.removeEventListener("keydown", handleKeydown);
 
-      // Wait for the fade-out transition before hiding.
-      // 200ms matches the CSS transition duration.
-      setTimeout(function () {
-        backdrop.hidden = true;
-      }, 200);
+        // Wait for the fade-out transition before hiding.
+        // 200ms matches the CSS transition duration.
+        setTimeout(function () {
+          backdrop.hidden = true;
+        }, 200);
 
-      // Restore focus to whatever opened the dialog.
-      if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
-        lastFocusedElement.focus();
+        // Restore focus to whatever opened the dialog.
+        if (
+          lastFocusedElement &&
+          typeof lastFocusedElement.focus === "function"
+        ) {
+          lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
       }
-      lastFocusedElement = null;
-    }
 
-    /* =========================================================
+      /* =========================================================
        6. KEYBOARD HANDLING
        Esc closes. Tab cycles inside the modal (the focus trap).
        ========================================================= */
-    function handleKeydown(event) {
-      if (event.key === "Escape") {
-        closeModal();
-        return;
+      function handleKeydown(event) {
+        if (event.key === "Escape") {
+          closeModal();
+          return;
+        }
+
+        if (event.key !== "Tab") return;
+
+        const focusables = getFocusable(modal);
+        if (focusables.length === 0) {
+          event.preventDefault();
+          return;
+        }
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+
+        // Shift+Tab on first element → wrap to last
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+        // Tab on last element → wrap to first
+        else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
 
-      if (event.key !== "Tab") return;
-
-      const focusables = getFocusable(modal);
-      if (focusables.length === 0) {
-        event.preventDefault();
-        return;
-      }
-
-      const first = focusables[0];
-      const last  = focusables[focusables.length - 1];
-
-      // Shift+Tab on first element → wrap to last
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      }
-      // Tab on last element → wrap to first
-      else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    /* =========================================================
+      /* =========================================================
        7. WIRE UP EVENTS
        ========================================================= */
-    openBtn.addEventListener("click", openModal);
-    closeBtn.addEventListener("click", closeModal);
-    cancelBtn.addEventListener("click", closeModal);
+      openBtn.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+      cancelBtn.addEventListener("click", closeModal);
 
-    confirmBtn.addEventListener("click", function () {
-      // In a real app, delete the account here.
-      closeModal();
-    });
-
-    // Click on the backdrop itself (but not the modal) closes.
-    backdrop.addEventListener("click", function (event) {
-      if (event.target === backdrop) {
+      confirmBtn.addEventListener("click", function () {
+        // In a real app, delete the account here.
         closeModal();
-      }
-    });
-  </script>
-</body> 
+      });
+
+      // Click on the backdrop itself (but not the modal) closes.
+      backdrop.addEventListener("click", function (event) {
+        if (event.target === backdrop) {
+          closeModal();
+        }
+      });
+    </script>
+  </body>
 </html>
