@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Generator</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 20px;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: #e2e8f0;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 460px;
+        background: #1e293b;
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      .card h1 {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+      }
+      .card .subtitle {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 22px;
+      }
+
+      /* ---------- Password display ---------- */
+      .password-display {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .password-field {
+        flex: 1;
+        min-height: 56px;
+        padding: 14px 18px;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 1.1rem;
+        letter-spacing: 0.05em;
+        word-break: break-all;
+        color: #5eead4;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: all; /* click selects the whole password */
+        transition: border-color 0.15s;
+      }
+      .password-field:hover {
+        border-color: #475569;
+      }
+      .password-field.empty {
+        color: #64748b;
+        font-family: inherit;
+        font-style: italic;
+        font-size: 0.9rem;
+        letter-spacing: 0;
+        cursor: default;
+        user-select: none;
+      }
+
+      .copy-btn {
+        padding: 0 20px;
+        background: #14b8a6;
+        color: #0f172a;
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+        white-space: nowrap;
+      }
+      .copy-btn:hover:not(:disabled) {
+        background: #2dd4bf;
+      }
+      .copy-btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+      .copy-btn:disabled {
+        background: #334155;
+        color: #64748b;
+        cursor: not-allowed;
+      }
+      .copy-btn.copied {
+        background: #22c55e;
+        color: #0f172a;
+      }
+
+      /* ---------- Strength meter ---------- */
+      .strength {
+        margin-bottom: 20px;
+      }
+      .strength-track {
+        height: 6px;
+        background: #334155;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+      .strength-fill {
+        height: 100%;
+        width: 0%;
+        background: #ef4444;
+        border-radius: 999px;
+        transition:
+          width 0.25s ease,
+          background 0.25s ease;
+      }
+      .strength-label {
+        font-size: 0.78rem;
+        color: #94a3b8;
+      }
+
+      /* ---------- Length slider ---------- */
+      .field-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 10px;
+      }
+
+      .length-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .length-row input[type="range"] {
+        flex: 1;
+        accent-color: #14b8a6;
+        cursor: pointer;
+      }
+      .length-value {
+        min-width: 38px;
+        text-align: center;
+        font-family: ui-monospace, monospace;
+        font-weight: 700;
+        font-size: 0.95rem;
+        background: #0f172a;
+        color: #5eead4;
+        padding: 5px 8px;
+        border-radius: 8px;
+      }
+
+      /* ---------- Option checkboxes ---------- */
+      .options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+
+      .option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 13px;
+        background: #0f172a;
+        border: 2px solid #334155;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.88rem;
+        color: #cbd5e1;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+        user-select: none;
+      }
+      .option:hover {
+        border-color: #475569;
+      }
+      .option:has(input:checked) {
+        border-color: #14b8a6;
+        background: #134e4a;
+        color: #f1f5f9;
+      }
+
+      .option input[type="checkbox"] {
+        accent-color: #14b8a6;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+
+      /* ---------- Generate button ---------- */
+      .generate-btn {
+        width: 100%;
+        padding: 14px;
+        background: #14b8a6;
+        color: #0f172a;
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .generate-btn:hover {
+        background: #2dd4bf;
+      }
+      .generate-btn:active {
+        transform: scale(0.98);
+      }
+
+      /* Disable copy button while empty */
+      .copy-btn:disabled {
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="card">
+      <h1>🔐 Password generator</h1>
+      <p class="subtitle">
+        Strong, random passwords — never saved, never sent.
+      </p>
+
+      <!-- Password display -->
+      <div class="password-display">
+        <div id="password-field" class="password-field empty">
+          Click generate
+        </div>
+        <button id="copy-btn" class="copy-btn" disabled>Copy</button>
+      </div>
+
+      <!-- Strength meter -->
+      <div class="strength">
+        <div class="strength-track">
+          <div id="strength-fill" class="strength-fill"></div>
+        </div>
+        <div id="strength-label" class="strength-label">—</div>
+      </div>
+
+      <!-- Length -->
+      <label class="field-label" for="length">Length</label>
+      <div class="length-row">
+        <input id="length" type="range" min="4" max="64" value="16" />
+        <span id="length-value" class="length-value">16</span>
+      </div>
+
+      <!-- Character types -->
+      <span class="field-label">Include</span>
+      <div class="options">
+        <label class="option">
+          <input id="opt-lower" type="checkbox" checked />
+          <span>Lowercase (a–z)</span>
+        </label>
+        <label class="option">
+          <input id="opt-upper" type="checkbox" checked />
+          <span>Uppercase (A–Z)</span>
+        </label>
+        <label class="option">
+          <input id="opt-numbers" type="checkbox" checked />
+          <span>Numbers (0–9)</span>
+        </label>
+        <label class="option">
+          <input id="opt-symbols" type="checkbox" checked />
+          <span>Symbols (!@#…)</span>
+        </label>
+      </div>
+
+      <button id="generate-btn" class="generate-btn">
+        Generate new password
+      </button>
+    </main>
+
+    <script>
+      /* =========================================================
+       1. CHARACTER SETS
+       ========================================================= */
+      const CHARSETS = {
+        lower: "abcdefghijklmnopqrstuvwxyz",
+        upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        numbers: "0123456789",
+        symbols: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+      };
+
+      /* =========================================================
+       2. ELEMENT REFERENCES
+       ========================================================= */
+      const passwordField = document.getElementById("password-field");
+      const copyBtn = document.getElementById("copy-btn");
+      const strengthFill = document.getElementById("strength-fill");
+      const strengthLabel = document.getElementById("strength-label");
+      const lengthSlider = document.getElementById("length");
+      const lengthValue = document.getElementById("length-value");
+      const generateBtn = document.getElementById("generate-btn");
+
+      const optLower = document.getElementById("opt-lower");
+      const optUpper = document.getElementById("opt-upper");
+      const optNumbers = document.getElementById("opt-numbers");
+      const optSymbols = document.getElementById("opt-symbols");
+
+      /* =========================================================
+       3. STATE
+       ========================================================= */
+      let currentPassword = ""; // the password currently displayed
+      let copyResetTimer = null; // clears "Copied!" state after 1.5s
+
+      /* =========================================================
+       4. SECURE RANDOM — cryptographically safe, not Math.random()
+       ========================================================= */
+      function randomIndex(max) {
+        // Rejection sampling: avoids modulo bias.
+        // 2^32 % max would slightly favor low indices without this loop.
+        const limit = Math.floor(0xffffffff / max) * max;
+        const buffer = new Uint32Array(1);
+        do {
+          crypto.getRandomValues(buffer);
+        } while (buffer[0] >= limit);
+        return buffer[0] % max;
+      }
+
+      /* =========================================================
+       5. SHUFFLE (Fisher-Yates, using secure random)
+       ========================================================= */
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = randomIndex(i + 1);
+          const tmp = arr[i];
+          arr[i] = arr[j];
+          arr[j] = tmp;
+        }
+        return arr;
+      }
+
+      /* =========================================================
+       6. THE GENERATOR
+       ========================================================= */
+      function generatePassword(length, enabledSets) {
+        const pool = enabledSets.join("");
+        const chars = [];
+
+        // Guarantee at least one character from each enabled set.
+        for (const set of enabledSets) {
+          chars.push(set[randomIndex(set.length)]);
+        }
+
+        // Fill the rest from the combined pool.
+        while (chars.length < length) {
+          chars.push(pool[randomIndex(pool.length)]);
+        }
+
+        // Shuffle so the guaranteed chars aren't always first.
+        return shuffle(chars).join("");
+      }
+
+      /* =========================================================
+       7. STRENGTH ESTIMATE (rough heuristic)
+       ========================================================= */
+      function updateStrength(password, typeCount) {
+        if (!password) {
+          strengthFill.style.width = "0%";
+          strengthFill.style.background = "#ef4444";
+          strengthLabel.textContent = "—";
+          return;
+        }
+
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (password.length >= 16) score++;
+        if (typeCount >= 2) score++;
+        if (typeCount >= 3) score++;
+        if (typeCount === 4) score++;
+
+        // score 0–6 → 4 visual levels
+        let color, label, width;
+        if (score <= 2) {
+          color = "#ef4444";
+          label = "Weak";
+          width = 25;
+        } else if (score <= 3) {
+          color = "#f59e0b";
+          label = "Fair";
+          width = 50;
+        } else if (score <= 4) {
+          color = "#3b82f6";
+          label = "Good";
+          width = 75;
+        } else {
+          color = "#22c55e";
+          label = "Strong";
+          width = 100;
+        }
+
+        strengthFill.style.width = width + "%";
+        strengthFill.style.background = color;
+        strengthLabel.textContent =
+          label + " · " + password.length + " characters";
+      }
+
+      /* =========================================================
+       8. REGENERATE — the one function every input calls
+       ========================================================= */
+      function regenerate() {
+        const length = Number(lengthSlider.value);
+        lengthValue.textContent = length;
+
+        const enabledSets = [];
+        if (optLower.checked) enabledSets.push(CHARSETS.lower);
+        if (optUpper.checked) enabledSets.push(CHARSETS.upper);
+        if (optNumbers.checked) enabledSets.push(CHARSETS.numbers);
+        if (optSymbols.checked) enabledSets.push(CHARSETS.symbols);
+
+        // Guard: at least one type must be enabled.
+        if (enabledSets.length === 0) {
+          currentPassword = "";
+          passwordField.textContent = "Select at least one character type";
+          passwordField.classList.add("empty");
+          copyBtn.disabled = true;
+          updateStrength("", 0);
+          return;
+        }
+
+        // Guard: length must be at least as big as the number of enabled types,
+        // otherwise we can't fit one of each.
+        const effectiveLength = Math.max(length, enabledSets.length);
+
+        currentPassword = generatePassword(effectiveLength, enabledSets);
+
+        passwordField.textContent = currentPassword;
+        passwordField.classList.remove("empty");
+        copyBtn.disabled = false;
+        updateStrength(currentPassword, enabledSets.length);
+      }
+
+      /* =========================================================
+       9. COPY TO CLIPBOARD
+       ========================================================= */
+      async function copyPassword() {
+        if (!currentPassword) return;
+
+        let success = false;
+
+        // Modern API (requires HTTPS or localhost)
+        try {
+          await navigator.clipboard.writeText(currentPassword);
+          success = true;
+        } catch {
+          // Fallback for insecure contexts / older browsers
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = currentPassword;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            ta.remove();
+            success = true;
+          } catch {
+            success = false;
+          }
+        }
+
+        if (!success) {
+          copyBtn.textContent = "Failed";
+          setTimeout(() => {
+            copyBtn.textContent = "Copy";
+          }, 1500);
+          return;
+        }
+
+        // Feedback
+        copyBtn.textContent = "Copied!";
+        copyBtn.classList.add("copied");
+
+        clearTimeout(copyResetTimer);
+        copyResetTimer = setTimeout(() => {
+          copyBtn.textContent = "Copy";
+          copyBtn.classList.remove("copied");
+        }, 1500);
+      }
+
+      /* =========================================================
+       10. WIRE UP EVENTS
+       ========================================================= */
+      // Every option change regenerates immediately.
+      [lengthSlider, optLower, optUpper, optNumbers, optSymbols].forEach(
+        function (el) {
+          el.addEventListener("input", regenerate);
+        },
+      );
+
+      generateBtn.addEventListener("click", regenerate);
+      copyBtn.addEventListener("click", copyPassword);
+
+      // Clicking the password field selects all of it (handy for manual copy)
+      passwordField.addEventListener("click", function () {
+        if (!currentPassword) return;
+        const range = document.createRange();
+        range.selectNodeContents(passwordField);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+
+      /* =========================================================
+       11. INITIAL RUN
+       ========================================================= */
+      regenerate();
+    </script>
+  </body>
+</html>
